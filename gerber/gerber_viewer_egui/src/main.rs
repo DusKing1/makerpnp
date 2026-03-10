@@ -63,7 +63,9 @@ struct GerberViewer {
     coord_input: (String, String),
     unit_system: UnitSystem,
 
-    use_bounding_box_outline: bool,
+    show_bounding_box_outline: bool,
+    show_origin_crosshair: bool,
+    show_center_crosshair: bool,
 
     is_about_modal_open: bool,
     step: f64,
@@ -124,7 +126,9 @@ impl GerberViewer {
             log: Vec::new(),
             coord_input: ("0.0".to_string(), "0.0".to_string()),
             config: RenderConfiguration::default(),
-            use_bounding_box_outline: true,
+            show_bounding_box_outline: true,
+            show_origin_crosshair: true,
+            show_center_crosshair: true,
             unit_system: UnitSystem::Millimeters,
 
             is_about_modal_open: false,
@@ -347,11 +351,14 @@ impl GerberViewer {
                 }
             }
 
-            // Draw origin crosshair
-            draw_crosshair(&painter, state.ui_state.origin_screen_pos, Color32::BLUE);
-            draw_crosshair(&painter, state.ui_state.center_screen_pos, Color32::LIGHT_GRAY);
+            if self.show_origin_crosshair {
+                draw_crosshair(&painter, state.ui_state.origin_screen_pos, Color32::BLUE);
+            }
+            if self.show_center_crosshair {
+                draw_crosshair(&painter, state.ui_state.center_screen_pos, Color32::LIGHT_GRAY);
+            }
 
-            if self.use_bounding_box_outline && !bbox_screen_vertices.is_empty() {
+            if self.show_bounding_box_outline && !bbox_screen_vertices.is_empty() {
                 draw_outline(&painter, bbox_screen_vertices, Color32::RED);
             }
         } else {
@@ -691,7 +698,9 @@ impl GerberViewer {
                 ui.checkbox(&mut self.config.use_vertex_numbering, "# Vertex numbering (polygons)");
                 ui.checkbox(&mut self.config.use_shape_numbering, "＃ Shape numbering");
                 ui.checkbox(&mut self.config.use_shape_bboxes, "◽ Shape bounding boxes");
-                ui.checkbox(&mut self.use_bounding_box_outline, "◻ Layer bounding box");
+                ui.checkbox(&mut self.show_bounding_box_outline, "◻ Layer bounding box");
+                ui.checkbox(&mut self.show_origin_crosshair, "⌖ Origin Crosshair");
+                ui.checkbox(&mut self.show_center_crosshair, "⊞ Center Crosshair");
 
                 ui.menu_button("Units...", |ui| {
                     ui.radio_value(&mut self.unit_system, UnitSystem::Millimeters, "Millimeters");
@@ -730,8 +739,12 @@ impl GerberViewer {
                 .on_hover_text("Shape numbering");
             ui.toggle_value(&mut self.config.use_shape_bboxes, "◽")
                 .on_hover_text("Shape bounding boxes");
-            ui.toggle_value(&mut self.use_bounding_box_outline, "◻")
+            ui.toggle_value(&mut self.show_bounding_box_outline, "◻")
                 .on_hover_text("Layer bounding box");
+            ui.toggle_value(&mut self.show_origin_crosshair, "⌖")
+                .on_hover_text("Origin crosshair");
+            ui.toggle_value(&mut self.show_center_crosshair, "⊞")
+                .on_hover_text("Center crosshair");
 
             ui.separator();
 
