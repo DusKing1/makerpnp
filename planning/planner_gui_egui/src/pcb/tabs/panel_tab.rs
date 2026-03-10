@@ -12,8 +12,8 @@ use egui_extras::{Column, TableBuilder};
 use egui_i18n::tr;
 use egui_mobius::Value;
 use gerber_viewer::gerber_types::{
-    Aperture, Circle, Command, CoordinateFormat, ExtendedCode, GerberCode, GerberError, ImageMirroring, ImageOffset,
-    ImageRotation, InterpolationMode,
+    Aperture, Circle, Command, CoordinateFormat, CoordinateMode, ExtendedCode, GerberCode, GerberError, ImageMirroring,
+    ImageOffset, ImageRotation, InterpolationMode, ZeroOmission,
 };
 use gerber_viewer::{ToPosition, ToVector};
 use math::ops::Ops2D;
@@ -1360,7 +1360,7 @@ fn build_panel_preview_commands(
     // FUTURE generate multiple, real, gerber layers instead of a 'preview' layer
     //        i.e. 'board outline, top mask, top copper layers, bottom mask, bottom copper layer, v-score/cut (rails)'
 
-    let coordinate_format = CoordinateFormat::new(4, 6);
+    let coordinate_format = CoordinateFormat::new(ZeroOmission::Leading, CoordinateMode::Absolute, 4, 6);
 
     let mut gerber_builder = GerberBuilder::new()
         .with_units(panel_sizing.units.into_gerber_unit())

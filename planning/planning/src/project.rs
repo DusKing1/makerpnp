@@ -24,7 +24,7 @@ use serde_with::serde_as;
 use serde_with::DisplayFromStr;
 use thiserror::Error;
 use time::OffsetDateTime;
-use tracing::{debug, error, info, trace, warn};
+use tracing::{debug, info, trace, warn};
 use util::sorting::SortOrder;
 use util::source::Source;
 
