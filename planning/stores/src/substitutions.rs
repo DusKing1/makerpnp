@@ -41,7 +41,7 @@ pub mod csv_loading_tests {
     use assert_fs::TempDir;
     use criteria::{ExactMatchCriterion, RegexMatchCriterion};
     use csv::QuoteStyle;
-    use eda::substitution::{EdaSubstitutionRule, EdaSubstitutionRuleTransformItem};
+    use eda::substitution::{EdaSubstitutionRule, EdaSubstitutionRuleClassification, EdaSubstitutionRuleTransformItem};
     use regex::Regex;
 
     use crate::substitutions::load_eda_substitutions;
@@ -66,6 +66,7 @@ pub mod csv_loading_tests {
             value_pattern: Some("VALUE1".to_string()),
             name: Some("SUBSTITUTED_NAME1".to_string()),
             value: Some("SUBSTITUTED_VALUE1".to_string()),
+            comment: None,
             ..TestEdaSubstitutionRecord::diptrace_defaults()
         })?;
 
@@ -74,6 +75,7 @@ pub mod csv_loading_tests {
             value_pattern: Some("/(VALUE2)/".to_string()),
             name: Some("SUBSTITUTED_NAME2".to_string()),
             value: Some("SUBSTITUTED_VALUE2".to_string()),
+            comment: None,
             ..TestEdaSubstitutionRecord::diptrace_defaults()
         })?;
 
@@ -102,6 +104,7 @@ pub mod csv_loading_tests {
                         field_value: "SUBSTITUTED_VALUE1".to_string(),
                     },
                 ],
+                classifications: vec![],
             },
             EdaSubstitutionRule {
                 criteria: vec![
@@ -124,8 +127,77 @@ pub mod csv_loading_tests {
                         field_value: "SUBSTITUTED_VALUE2".to_string(),
                     },
                 ],
+                classifications: vec![],
             },
         ];
+
+        let csv_content = std::fs::read_to_string(test_eda_substitutions_path)?;
+        println!("{csv_content:}");
+
+        // when
+        let result = load_eda_substitutions(&test_eda_substitutions_source)?;
+
+        // then
+        assert_eq!(result, expected_result);
+
+        Ok(())
+    }
+
+    #[test]
+    pub fn extract_derating_warning_and_comments() -> anyhow::Result<()> {
+        // given
+        let temp_dir = TempDir::new()?;
+        let mut test_eda_substitutions_path = temp_dir.path().to_path_buf();
+        test_eda_substitutions_path.push("substitutions.csv");
+        let test_eda_substitutions_source =
+            EdaSubstitutionsSource::from_absolute_path(test_eda_substitutions_path.clone())?;
+
+        let mut writer = csv::WriterBuilder::new()
+            .quote_style(QuoteStyle::Always)
+            .from_path(test_eda_substitutions_path.clone())?;
+
+        writer.serialize(TestEdaSubstitutionRecord {
+            name_pattern: Some("NAME1".to_string()),
+            value_pattern: Some("VALUE1".to_string()),
+            name: Some("SUBSTITUTED_NAME1".to_string()),
+            value: Some("SUBSTITUTED_VALUE1".to_string()),
+            comment: Some("DERATE reason1; COMMENT1 ;COMMENT2; ! ONE ;WARNING: two; WARNING THREE ".to_string()),
+            ..TestEdaSubstitutionRecord::diptrace_defaults()
+        })?;
+
+        writer.flush()?;
+
+        // and
+        let expected_result: Vec<EdaSubstitutionRule> = vec![EdaSubstitutionRule {
+            criteria: vec![
+                Box::new(ExactMatchCriterion {
+                    field_name: "name".to_string(),
+                    field_pattern: "NAME1".to_string(),
+                }),
+                Box::new(ExactMatchCriterion {
+                    field_name: "value".to_string(),
+                    field_pattern: "VALUE1".to_string(),
+                }),
+            ],
+            transforms: vec![
+                EdaSubstitutionRuleTransformItem {
+                    field_name: "name".to_string(),
+                    field_value: "SUBSTITUTED_NAME1".to_string(),
+                },
+                EdaSubstitutionRuleTransformItem {
+                    field_name: "value".to_string(),
+                    field_value: "SUBSTITUTED_VALUE1".to_string(),
+                },
+            ],
+            classifications: vec![
+                EdaSubstitutionRuleClassification::Derate(Some("reason1".to_string())),
+                EdaSubstitutionRuleClassification::Comment(Some("COMMENT1".to_string())),
+                EdaSubstitutionRuleClassification::Comment(Some("COMMENT2".to_string())),
+                EdaSubstitutionRuleClassification::Warning(Some("ONE".to_string())),
+                EdaSubstitutionRuleClassification::Warning(Some("two".to_string())),
+                EdaSubstitutionRuleClassification::Warning(Some("THREE".to_string())),
+            ],
+        }];
 
         let csv_content = std::fs::read_to_string(test_eda_substitutions_path)?;
         println!("{csv_content:}");
@@ -169,6 +241,10 @@ pub mod test {
         pub package: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         pub val: Option<String>,
+
+        // other non-eda specific fields
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub comment: Option<String>,
     }
 
     impl TestEdaSubstitutionRecord {

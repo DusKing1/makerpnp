@@ -159,6 +159,7 @@ mod tests {
             value_pattern: "330R".to_string(),
             name: "RES_0402".to_string(),
             value: "330R 1/16W 5%".to_string(),
+            comment: Some("Use 5% 1/16W by default".to_string()),
         })?;
 
         writer.flush()?;
@@ -179,6 +180,7 @@ mod tests {
             value_pattern: "BLACK".to_string(),
             name: "CONN_HEADER_2P54_2P_NS_V".to_string(),
             value: "BLACK".to_string(),
+            comment: Some("Use a more specific header".to_string()),
         })?;
         writer.serialize(TestDiptraceSubstitutionRecord {
             eda: "DipTrace".to_string(),
@@ -186,6 +188,7 @@ mod tests {
             value_pattern: "POWER".to_string(),
             name: "HEADER_2P".to_string(),
             value: "BLACK".to_string(),
+            comment: Some("!Use the black 2P headers instead".to_string()),
         })?;
 
         writer.flush()?;
@@ -416,7 +419,7 @@ mod tests {
         let expected_part_mapping_tree = indoc! {"
             Mapping Result
             ├── R1 (name: 'RES_0402', value: '330R')
-            │   └── Substituted (name: 'RES_0402', value: '330R 1/16W 5%'), by (name_pattern: 'RES_0402', value_pattern: '330R')
+            │   └── Substituted (name: 'RES_0402', value: '330R 1/16W 5%'), by (name_pattern: 'RES_0402', value_pattern: '330R'), comment: 'Use 5% 1/16W by default'
             │       ├── manufacturer: 'RES_MFR1', mpn: 'RES1'
             │       └── manufacturer: 'RES_MFR2', mpn: 'RES2' (Found in load-out, reference: 'FEEDER_1')
             ├── R3 (name: 'RES_0402', value: '470R 1/16W 5%')
@@ -433,8 +436,8 @@ mod tests {
             ├── C1 (name: 'CAP_0402', value: '10uF 6.3V 20%')
             │   └── ERROR: Unresolved mapping - No mappings found.
             ├── J1 (name: 'HEADER_2P', value: 'POWER')
-            │   └── Substituted (name: 'HEADER_2P', value: 'BLACK'), by (name_pattern: 'HEADER_2P', value_pattern: 'POWER')
-            │       └── Substituted (name: 'CONN_HEADER_2P54_2P_NS_V', value: 'BLACK'), by (name_pattern: 'HEADER_2P', value_pattern: 'BLACK')
+            │   └── Substituted (name: 'HEADER_2P', value: 'BLACK'), by (name_pattern: 'HEADER_2P', value_pattern: 'POWER'), warning: 'Use the black 2P headers instead'
+            │       └── Substituted (name: 'CONN_HEADER_2P54_2P_NS_V', value: 'BLACK'), by (name_pattern: 'HEADER_2P', value_pattern: 'BLACK'), comment: 'Use a more specific header'
             │           └── manufacturer: 'CONN_MFR1', mpn: 'CONN1' (Auto-selected)
             ├── TP1 (name: '', value: '')
             │   └── ERROR: Unresolved mapping - No mappings found.
@@ -1049,6 +1052,7 @@ mod tests {
         value_pattern: String,
         name: String,
         value: String,
+        comment: Option<String>,
     }
 
     #[derive(Debug, serde::Serialize)]

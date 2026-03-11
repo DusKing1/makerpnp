@@ -9,9 +9,17 @@ pub struct EdaSubstitutionRuleTransformItem {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum EdaSubstitutionRuleClassification {
+    Derate(Option<String>),
+    Comment(Option<String>),
+    Warning(Option<String>),
+}
+
+#[derive(Debug, PartialEq)]
 pub struct EdaSubstitutionRule {
     pub criteria: Vec<Box<dyn FieldCriterion>>,
     pub transforms: Vec<EdaSubstitutionRuleTransformItem>,
+    pub classifications: Vec<EdaSubstitutionRuleClassification>,
 }
 
 impl EdaSubstitutionRule {
@@ -195,6 +203,7 @@ pub mod eda_substitutor_tests {
                     field_value: "INTERMEDIATE_VALUE1".to_string(),
                 },
             ],
+            classifications: vec![],
         };
         let second_eda_substitution_rule = EdaSubstitutionRule {
             criteria: vec![
@@ -217,6 +226,7 @@ pub mod eda_substitutor_tests {
                     field_value: "SUBSTITUTED_VALUE1".to_string(),
                 },
             ],
+            classifications: vec![],
         };
         // and a list of rules, that are out-of-order (i.e. eda_substitution1 must be applied first)
         let eda_substitution_rules = vec![second_eda_substitution_rule, first_eda_substitution_rule];
@@ -285,6 +295,7 @@ pub mod eda_substitutor_tests {
                     field_value: "INTERMEDIATE_VAL1".to_string(),
                 },
             ],
+            classifications: vec![],
         };
         let second_eda_substitution = EdaSubstitutionRule {
             criteria: vec![
@@ -307,6 +318,7 @@ pub mod eda_substitutor_tests {
                     field_value: "SUBSTITUTED_VAL1".to_string(),
                 },
             ],
+            classifications: vec![],
         };
         // and a list of rules, that are out-of-order (i.e. eda_substitution1 must be applied first)
         let eda_substitutions = vec![second_eda_substitution, first_eda_substitution];
@@ -374,6 +386,7 @@ pub mod eda_substitutor_tests {
                     field_value: "SUBSTITUTED_VALUE1".to_string(),
                 },
             ],
+            classifications: vec![],
         };
         // and a list of rules, that are out-of-order (i.e. eda_substitution1 must be applied first)
         let eda_substitution_rules = vec![eda_substitution_rule];

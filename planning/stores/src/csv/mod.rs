@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use assembly::rules::AssemblyRule;
 use criteria::{ExactMatchCriterion, FieldCriterion, GenericCriteria, RegexMatchCriterion};
-use eda::substitution::{EdaSubstitutionRule, EdaSubstitutionRuleTransformItem};
+use eda::substitution::{EdaSubstitutionRule, EdaSubstitutionRuleClassification, EdaSubstitutionRuleTransformItem};
 use eda::EdaTool;
 use heck::ToUpperCamelCase;
 use package_mapper::criteria::PartMappingCriteria;
@@ -337,9 +337,53 @@ impl SubstitutionRecord {
             }
         }
 
+        let comment = fields.get("Comment").cloned();
+
+        let mut classifications = vec![];
+
+        if let Some(comment) = comment {
+            let parts = comment.split(";");
+            for part in parts {
+                let part = part.trim();
+                /// Case insensitively strip any prefixes and return the remainder, or None if none of the prefixes were found
+                ///
+                /// Uses the first prefix that matches. Caller should take care to order prefixes when using
+                /// prefixes that are similar.  e.g. use `["TESTING", "TEST"]` (longest first), not `["TEST", "TESTING"]`.
+                fn strip_any_prefix_case_insensitive<'a>(s: &'a str, prefixes: &[&str]) -> Option<&'a str> {
+                    prefixes.iter().find_map(|p| {
+                        let head = s.get(..p.len())?;
+                        if head.eq_ignore_ascii_case(p) {
+                            Some(&s[p.len()..])
+                        } else {
+                            None
+                        }
+                    })
+                }
+
+                if let Some(remaining) = strip_any_prefix_case_insensitive(&part, &["DERATE", "DE-RATE"]) {
+                    classifications.push(EdaSubstitutionRuleClassification::Derate(Some(
+                        remaining.trim().to_string(),
+                    )));
+                    continue;
+                }
+
+                if let Some(remaining) = strip_any_prefix_case_insensitive(&part, &["WARNING:", "WARNING", "!"]) {
+                    classifications.push(EdaSubstitutionRuleClassification::Warning(Some(
+                        remaining.trim().to_string(),
+                    )));
+                    continue;
+                }
+
+                classifications.push(EdaSubstitutionRuleClassification::Comment(Some(
+                    part.trim().to_string(),
+                )));
+            }
+        };
+
         Ok(EdaSubstitutionRule {
             criteria,
             transforms,
+            classifications,
         })
     }
 }

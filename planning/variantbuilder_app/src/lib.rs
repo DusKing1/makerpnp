@@ -9,7 +9,9 @@ pub use crux_core::Core;
 use crux_core::{render, App, Command};
 use csv::QuoteStyle;
 use eda::placement::{EdaPlacement, EdaPlacementField};
-use eda::substitution::{EdaSubstitutionResult, EdaSubstitutionRule, EdaSubstitutor};
+use eda::substitution::{
+    EdaSubstitutionResult, EdaSubstitutionRule, EdaSubstitutionRuleClassification, EdaSubstitutor,
+};
 pub use eda::EdaTool;
 use part_mapper::{PartMapper, PartMapperError, PartMappingError, PartMappingResult, PlacementPartMappingResult};
 use serde_with::serde_as;
@@ -227,7 +229,10 @@ fn build_assembly_variant(
     match &processing_result {
         Ok(_) => (),
         Err(PartMapperError::MappingErrors(mappings)) => {
-            let error_count = mappings.iter().filter(|result|result.mapping_result.is_err()).count();
+            let error_count = mappings
+                .iter()
+                .filter(|result| result.mapping_result.is_err())
+                .count();
             error!("{:?} Mapping failure(s)", error_count)
         }
     }
@@ -319,11 +324,24 @@ fn build_mapping_tree(
             let mut parent = &mut placement_node;
 
             for chain_entry in substitution_result.chain.iter() {
-                let substitution_label = format!(
+                let mut substitution_label = format!(
                     "Substituted ({}), by ({})",
                     chain_entry.rule.format_transform(),
                     chain_entry.rule.format_criteria(),
                 );
+
+                for classification in &chain_entry.rule.classifications {
+                    let (label, message) = match classification {
+                        EdaSubstitutionRuleClassification::Derate(message) => ("de-rate", message),
+                        EdaSubstitutionRuleClassification::Comment(message) => ("comment", message),
+                        EdaSubstitutionRuleClassification::Warning(message) => ("warning", message),
+                    };
+
+                    if let Some(message) = message {
+                        let append = format!(", {}: '{}'", label, message);
+                        substitution_label.push_str(&append);
+                    }
+                }
 
                 let substitution_node = Tree::new(substitution_label);
                 parent.leaves.push(substitution_node);
