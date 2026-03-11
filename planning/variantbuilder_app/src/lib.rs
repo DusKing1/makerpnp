@@ -226,8 +226,9 @@ fn build_assembly_variant(
 
     match &processing_result {
         Ok(_) => (),
-        Err(PartMapperError::MappingErrors(_)) => {
-            error!("Mapping failures")
+        Err(PartMapperError::MappingErrors(mappings)) => {
+            let error_count = mappings.iter().filter(|result|result.mapping_result.is_err()).count();
+            error!("{:?} Mapping failure(s)", error_count)
         }
     }
 

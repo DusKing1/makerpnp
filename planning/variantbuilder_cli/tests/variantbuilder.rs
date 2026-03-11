@@ -530,7 +530,7 @@ mod tests {
             "Ref_des list: R1, R3, R4, D1, C1, J1, TP1, TP2\n",
             "Matched 8 placements for assembly variant\n",
             expected_part_mapping_tree,
-            "Mapping failures\n",
+            "5 Mapping failure(s)\n",
         ]);
 
         // and
