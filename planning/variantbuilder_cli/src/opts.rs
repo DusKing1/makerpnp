@@ -77,7 +77,11 @@ pub enum Command {
         #[arg(long, value_delimiter = ',', num_args = 0.., value_name = "SOURCE")]
         substitutions: Vec<EdaSubstitutionsSource>,
 
-        /// List of reference designators to disable (use for do-not-fit, no-place, test-points, fiducials, etc)
+        /// List of reference designators to exclude (test-pads, fiducials, etc)
+        #[arg(long, num_args = 0.., value_delimiter = ',')]
+        ref_des_exclude_list: Vec<String>,
+
+        /// List of reference designators to disable (use for do-not-fit, no-place, etc)
         #[arg(long, num_args = 0.., value_delimiter = ',')]
         ref_des_disable_list: Vec<String>,
 
@@ -118,6 +122,7 @@ impl TryFrom<Opts> for Event {
                 load_out,
                 assembly_rules,
                 output,
+                ref_des_exclude_list,
                 ref_des_disable_list,
             } => {
                 let eda_tool = eda.build();
@@ -136,6 +141,7 @@ impl TryFrom<Opts> for Event {
                     load_out,
                     assembly_rules,
                     output,
+                    ref_des_exclude_list,
                     ref_des_disable_list,
                 };
 

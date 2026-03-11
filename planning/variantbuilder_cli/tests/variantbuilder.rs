@@ -1150,8 +1150,10 @@ mod help {
                       Part-mappings source
                   --substitutions [<SOURCE>...]
                       Substitution sources
+                  --ref-des-exclude-list [<REF_DES_EXCLUDE_LIST>...]
+                      List of reference designators to exclude (test-pads, fiducials, etc)
                   --ref-des-disable-list [<REF_DES_DISABLE_LIST>...]
-                      List of reference designators to disable (use for do-not-fit, no-place, test-points, fiducials, etc)
+                      List of reference designators to disable (use for do-not-fit, no-place, etc)
                   --assembly-rules <SOURCE>
                       Assembly rules source
                   --output <FILE>

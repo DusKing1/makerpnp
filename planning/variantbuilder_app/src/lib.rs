@@ -64,6 +64,7 @@ pub enum Event {
         load_out: Option<LoadOutSource>,
         assembly_rules: Option<AssemblyRuleSource>,
         output: String,
+        ref_des_exclude_list: Vec<String>,
         ref_des_disable_list: Vec<String>,
     },
     //
@@ -96,6 +97,7 @@ impl App for VariantBuilder {
                 load_out,
                 assembly_rules,
                 output,
+                ref_des_exclude_list,
                 ref_des_disable_list,
             } => {
                 let try_fn = |_model: &mut Model| -> Result<Command<Self::Effect, Self::Event>, AppError> {
@@ -109,6 +111,7 @@ impl App for VariantBuilder {
                         &load_out,
                         &assembly_rules,
                         &output,
+                        &ref_des_exclude_list,
                         &ref_des_disable_list,
                     )
                     .map_err(|cause| AppError::OperationError(cause.into()))?;
@@ -151,10 +154,18 @@ fn build_assembly_variant(
     load_out_source: &Option<LoadOutSource>,
     assembly_rules_source: &Option<AssemblyRuleSource>,
     output: &String,
+    ref_des_exclude_list: &Vec<String>,
     ref_des_disable_list: &Vec<String>,
 ) -> Result<(), Error> {
-    let mut original_eda_placements = eda_placements::load_eda_placements(eda_tool, placements_source)?;
+    let original_eda_placements = eda_placements::load_eda_placements(eda_tool, placements_source)?;
     info!("Loaded {} placements", original_eda_placements.len());
+
+    // FUTURE show unmatched elements from the `ref_des_exclude_list`
+    info!("excluding placements: {:?}", ref_des_exclude_list);
+    let mut eda_placements: Vec<EdaPlacement> = original_eda_placements
+        .into_iter()
+        .filter(|placement| !ref_des_exclude_list.contains(&placement.ref_des))
+        .collect();
 
     let eda_substitution_rules = eda_substitutions_sources
         .iter()
@@ -166,12 +177,11 @@ fn build_assembly_variant(
             Ok::<Vec<EdaSubstitutionRule>, anyhow::Error>(rules)
         })?;
 
-    let eda_substitution_results = EdaSubstitutor::substitute(
-        original_eda_placements.as_mut_slice(),
-        eda_substitution_rules.as_slice(),
-    );
+    let eda_substitution_results =
+        EdaSubstitutor::substitute(eda_placements.as_mut_slice(), eda_substitution_rules.as_slice());
     trace!("eda_substitution_results: {:?}", eda_substitution_results);
 
+    // FUTURE show unmatched elements from the `ref_des_disable_list`
     info!("disabling placements: {:?}", ref_des_disable_list);
     let mut eda_placements: Vec<EdaPlacement> = eda_substitution_results
         .iter()
