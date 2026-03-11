@@ -30,7 +30,7 @@ pub struct AssemblyVariantArgs {
     #[arg(long, default_value = "Default")]
     name: String,
 
-    /// List of reference designators
+    /// List of reference designators for assembly variant (defaults to all if not specified)
     #[arg(long, num_args = 0.., value_delimiter = ',')]
     ref_des_list: Vec<String>,
 }
@@ -89,6 +89,7 @@ pub enum Command {
         #[arg(long, value_name = "FILE")]
         output: String,
 
+        /// Optional assembly variant
         #[command(flatten)]
         assembly_variant_args: Option<AssemblyVariantArgs>,
     },

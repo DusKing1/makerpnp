@@ -1159,7 +1159,7 @@ mod help {
                   --name <NAME>
                       Name of assembly variant [default: Default]
                   --ref-des-list [<REF_DES_LIST>...]
-                      List of reference designators
+                      List of reference designators for assembly variant (defaults to all if not specified)
               -h, --help
                       Print help
         "};
