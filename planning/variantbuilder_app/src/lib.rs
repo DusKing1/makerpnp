@@ -237,7 +237,9 @@ fn build_assembly_variant(
     info!("{}", tree);
 
     match &processing_result {
-        Ok(_) => (),
+        Ok(_) => {
+            info!("All placements mapped!")
+        },
         Err(PartMapperError::MappingErrors(mappings)) => {
             let error_count = mappings
                 .iter()
@@ -248,6 +250,8 @@ fn build_assembly_variant(
     }
 
     write_output_csv(output, matched_mappings)?;
+
+    info!("Output written to '{}'", output);
 
     Ok(())
 }

@@ -743,6 +743,7 @@ mod tests {
             "Ref_des list: \n",
             "Matched 1 placements for assembly variant\n",
             expected_part_mapping_tree,
+            "All placements mapped!\n",
         ]);
 
         // and
@@ -948,6 +949,7 @@ mod tests {
             "Ref_des list: \n",
             "Matched 1 placements for assembly variant\n",
             expected_part_mapping_tree,
+            "All placements mapped!\n",
         ]);
 
         // and
