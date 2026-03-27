@@ -6,7 +6,7 @@ pub mod criteria;
 pub mod placement;
 pub mod substitution;
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Copy, Clone)]
 pub enum EdaTool {
     DipTrace,
     KiCad,
