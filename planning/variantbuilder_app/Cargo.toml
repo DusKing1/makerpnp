@@ -17,6 +17,7 @@ serde_with = { workspace = true }
 crux_core = { workspace = true }
 
 assembly = { path = "../assembly"}
+pnp = { path = "../../pnp/pnp"}
 part_mapper = { path = "../part_mapper"}
 eda = { path = "../../eda/eda" }
 stores = { path = "../stores"}

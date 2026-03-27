@@ -8,6 +8,8 @@
 //! * Databases.
 //! * Etc.
 pub mod assembly_rules;
+
+pub mod bom;
 pub mod csv;
 pub mod eda_placements;
 pub mod load_out;

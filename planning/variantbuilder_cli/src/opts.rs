@@ -89,9 +89,14 @@ pub enum Command {
         #[arg(long, value_name = "SOURCE")]
         assembly_rules: Option<AssemblyRuleSource>,
 
+        // FIXME rename to output_placements
         /// Output CSV file
         #[arg(long, value_name = "FILE")]
         output: String,
+
+        /// Output CSV file
+        #[arg(long, value_name = "FILE")]
+        output_bom: String,
 
         /// Optional assembly variant
         #[command(flatten)]
@@ -122,6 +127,7 @@ impl TryFrom<Opts> for Event {
                 load_out,
                 assembly_rules,
                 output,
+                output_bom,
                 ref_des_exclude_list,
                 ref_des_disable_list,
             } => {
@@ -141,6 +147,7 @@ impl TryFrom<Opts> for Event {
                     load_out,
                     assembly_rules,
                     output,
+                    output_bom,
                     ref_des_exclude_list,
                     ref_des_disable_list,
                 };

@@ -6561,6 +6561,7 @@ dependencies = [
  "csv",
  "eda",
  "part_mapper",
+ "pnp",
  "serde",
  "serde_regex",
  "serde_with",

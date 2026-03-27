@@ -1,3 +1,5 @@
+use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::hash::Hash;
 use std::path::PathBuf;
 
 use anyhow::Error;
@@ -14,8 +16,11 @@ use eda::substitution::{
 };
 pub use eda::EdaTool;
 use part_mapper::{PartMapper, PartMapperError, PartMappingError, PartMappingResult, PlacementPartMappingResult};
+pub use pnp::part::Part;
+pub use pnp::placement::RefDes;
 use serde_with::serde_as;
 pub use stores::assembly_rules::AssemblyRuleSource;
+use stores::bom::{BOMRecord, JLCPCBBOMRecord};
 pub use stores::eda_placements::EdaPlacementsSource;
 pub use stores::load_out::LoadOutSource;
 pub use stores::part_mappings::PartMappingsSource;
@@ -64,6 +69,7 @@ pub enum Event {
         load_out: Option<LoadOutSource>,
         assembly_rules: Option<AssemblyRuleSource>,
         output: String,
+        output_bom: String,
         ref_des_exclude_list: Vec<String>,
         ref_des_disable_list: Vec<String>,
     },
@@ -97,6 +103,7 @@ impl App for VariantBuilder {
                 load_out,
                 assembly_rules,
                 output,
+                output_bom,
                 ref_des_exclude_list,
                 ref_des_disable_list,
             } => {
@@ -111,6 +118,7 @@ impl App for VariantBuilder {
                         &load_out,
                         &assembly_rules,
                         &output,
+                        &output_bom,
                         &ref_des_exclude_list,
                         &ref_des_disable_list,
                     )
@@ -154,6 +162,7 @@ fn build_assembly_variant(
     load_out_source: &Option<LoadOutSource>,
     assembly_rules_source: &Option<AssemblyRuleSource>,
     output: &String,
+    output_bom: &String,
     ref_des_exclude_list: &Vec<String>,
     ref_des_disable_list: &Vec<String>,
 ) -> Result<(), Error> {
@@ -194,8 +203,14 @@ fn build_assembly_variant(
         }
     }
 
-    let parts = parts::load_parts(parts_source)?;
-    info!("Loaded {} parts", parts.len());
+    let parts_and_meta_data = parts::load_parts(parts_source)?;
+    info!("Loaded {} parts", parts_and_meta_data.len());
+
+    // FUTURE avoid cloning parts
+    let parts = parts_and_meta_data
+        .iter()
+        .map(|(part, _meta_data)| part.clone())
+        .collect();
 
     let part_mappings = part_mappings::load_part_mappings(&parts, part_mappings_source)?;
     info!("Loaded {} part mappings", part_mappings.len());
@@ -239,7 +254,7 @@ fn build_assembly_variant(
     match &processing_result {
         Ok(_) => {
             info!("All placements mapped!")
-        },
+        }
         Err(PartMapperError::MappingErrors(mappings)) => {
             let error_count = mappings
                 .iter()
@@ -252,6 +267,9 @@ fn build_assembly_variant(
     write_output_csv(output, matched_mappings)?;
 
     info!("Output written to '{}'", output);
+
+    write_output_bom_csv(eda_tool, output_bom, matched_mappings, &parts_and_meta_data)?;
+    info!("BOM written to '{}'", output_bom);
 
     Ok(())
 }
@@ -288,6 +306,91 @@ fn write_output_csv(
                 writer.serialize(record)?;
             }
         }
+    }
+
+    writer.flush()?;
+
+    Ok(())
+}
+
+fn write_output_bom_csv(
+    eda_tool: EdaTool,
+    output_file_name: &String,
+    matched_mappings: &Vec<PlacementPartMappingResult>,
+    parts_and_meta_data: &Vec<(Part, HashMap<String, String>)>,
+) -> anyhow::Result<()> {
+    let output_path = PathBuf::from(output_file_name);
+
+    // FIXME normal = headers, JLCPCB = no-headers.
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(false)
+        .quote_style(QuoteStyle::Always)
+        .from_path(output_path)?;
+
+    let parts_and_meta_data: HashMap<Part, HashMap<String, String>> = parts_and_meta_data
+        .iter()
+        .cloned()
+        .collect();
+
+    let mut parts: BTreeMap<Part, (BTreeSet<RefDes>, String)> = BTreeMap::new();
+
+    trace!("parts: {:?}", parts);
+
+    for matched_mapping in matched_mappings.iter() {
+        match matched_mapping {
+            PlacementPartMappingResult {
+                eda_placement,
+                part,
+                ..
+            } => {
+                let footprint = match eda_tool {
+                    EdaTool::DipTrace => eda_placement
+                        .fields
+                        .iter()
+                        .find(|it| it.name == "name")
+                        .map(|field| field.value.clone()),
+                    EdaTool::KiCad => None,
+                    EdaTool::EasyEda => None,
+                }
+                .unwrap_or("UNKNOWN".to_string());
+
+                if let Some(part) = *part {
+                    let (ref_des_set, _footprint) = parts
+                        .entry(part.clone())
+                        .or_insert((BTreeSet::new(), footprint));
+
+                    let ref_des = RefDes::from(eda_placement.ref_des.clone());
+                    ref_des_set.insert(ref_des);
+                }
+            }
+        }
+    }
+
+    for (part, (ref_des_set, footprint)) in parts.into_iter() {
+        let quantity = ref_des_set.len();
+        let ref_des_set_joined = ref_des_set
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        // let bom_record = BOMRecord {
+        //     ref_des_set: ref_des_set_joined,
+        //     manufacturer: part.manufacturer,
+        //     mpn: part.mpn,
+        //     quantity,
+        // };
+
+        let meta_data = parts_and_meta_data.get(&part);
+
+        let bom_record = JLCPCBBOMRecord {
+            comment: format!("{} ({})", part.mpn, part.manufacturer),
+            designator: ref_des_set_joined,
+            footprint,
+            jlcpcb_part: meta_data.and_then(|part_meta_data| part_meta_data.get("LCSC").cloned()),
+        };
+
+        writer.serialize(bom_record)?;
     }
 
     writer.flush()?;

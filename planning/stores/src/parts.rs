@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use anyhow::{anyhow, Context, Error};
 use pnp::part::Part;
 use tracing::Level;
@@ -9,7 +11,7 @@ use crate::csv::PartRecord;
 pub type PartsSource = Source;
 
 #[tracing::instrument(level = Level::DEBUG)]
-pub fn load_parts(source: &PartsSource) -> Result<Vec<Part>, Error> {
+pub fn load_parts(source: &PartsSource) -> Result<Vec<(Part, HashMap<String, String>)>, Error> {
     info!("Loading parts. source: {}", source);
 
     let path = source
@@ -20,18 +22,18 @@ pub fn load_parts(source: &PartsSource) -> Result<Vec<Part>, Error> {
         .from_path(path.clone())
         .with_context(|| format!("Error reading parts. file: {}", path.display()))?;
 
-    let mut parts: Vec<Part> = vec![];
+    let mut parts: Vec<(Part, HashMap<String, String>)> = vec![];
 
     for result in csv_reader.deserialize() {
         let record: PartRecord = result.with_context(|| "Deserializing part record".to_string())?;
 
         trace!("{:?}", record);
 
-        let part = record
+        let (part, meta_data) = record
             .build_part()
             .with_context(|| format!("Building part from record. record: {:?}", record))?;
 
-        parts.push(part);
+        parts.push((part, meta_data));
     }
     Ok(parts)
 }
