@@ -111,7 +111,7 @@ impl UiComponent for ManageGerbersModal {
                 });
         }
 
-        ui.ctx().style_mut(|style| {
+        ui.ctx().global_style_mut(|style| {
             // if this is not done, text in labels/checkboxes/etc wraps when using taffy
             style.wrap_mode = Some(egui::TextWrapMode::Extend);
         });

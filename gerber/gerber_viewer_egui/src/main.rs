@@ -14,7 +14,6 @@ use eframe::{CreationContext, NativeOptions, egui, run_native};
 use egui::style::ScrollStyle;
 use egui::{Color32, Context, Frame, Id, Modal, Response, RichText, Ui};
 use egui_extras::{Column, TableBuilder};
-use egui_taffy::taffy::Dimension::Length;
 use egui_taffy::taffy::prelude::{auto, length, percent};
 use egui_taffy::taffy::{Size, Style};
 use egui_taffy::{TuiBuilderLogic, taffy, tui};
@@ -74,36 +73,37 @@ struct GerberViewer {
 }
 
 impl eframe::App for GerberViewer {
-    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+        let ctx = ui.ctx().clone();
         // Disable text wrapping
         //
         // egui text layouting tries to utilize minimal width possible
-        ctx.style_mut(|style| {
+        ctx.global_style_mut(|style| {
             style.wrap_mode = Some(egui::TextWrapMode::Extend);
         });
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+        egui::Panel::top("top_panel").show_inside(ui, |ui| {
             self.render_menu_bar(ui);
 
-            self.render_toolbar(ctx, ui);
+            self.render_toolbar(&ctx, ui);
         });
 
-        let panel_fill_color = ctx.style().visuals.panel_fill;
+        let panel_fill_color = ctx.global_style().visuals.panel_fill;
         // We just want to get rid of the margin in the panel, but we have to find the right color too...
         let panel_frame = Frame::default()
             .inner_margin(0.0)
             .fill(panel_fill_color);
 
-        egui::TopBottomPanel::bottom("bottom_panel")
+        egui::Panel::bottom("bottom_panel")
             .resizable(true)
-            .default_height(150.0)
-            .min_height(80.0)
+            .default_size(150.0)
+            .min_size(80.0)
             .frame(panel_frame)
-            .show(ctx, |ui| {
-                self.bottom_panel_content(ctx, ui);
+            .show_inside(ui, |ui| {
+                self.bottom_panel_content(ui);
             });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
             self.central_panel_content(ui);
         });
 
@@ -112,7 +112,7 @@ impl eframe::App for GerberViewer {
         //
 
         if self.is_about_modal_open {
-            self.render_about_modal(ctx);
+            self.render_about_modal(ui);
         }
     }
 }
@@ -120,7 +120,7 @@ impl eframe::App for GerberViewer {
 impl GerberViewer {
     pub fn new(_cc: &CreationContext) -> Self {
         _cc.egui_ctx
-            .style_mut(|style| style.spacing.scroll = ScrollStyle::solid());
+            .global_style_mut(|style| style.spacing.scroll = ScrollStyle::solid());
         Self {
             state: Arc::new(Mutex::new(None)),
             log: Vec::new(),
@@ -530,13 +530,14 @@ impl GerberViewer {
         }
     }
 
-    fn bottom_panel_content(&mut self, ctx: &Context, ui: &mut Ui) {
+    fn bottom_panel_content(&mut self, ui: &mut Ui) {
         let cell_style = Style {
             ..Style::default()
         };
 
-        let light_panel_fill_color = ctx
-            .style()
+        let light_panel_fill_color = ui
+            .ctx()
+            .global_style()
             .visuals
             .widgets
             .inactive
@@ -572,7 +573,7 @@ impl GerberViewer {
                     flex_grow: 1.0,
                     min_size: Size {
                         width: auto(),
-                        height: Length(100.0),
+                        height: length(100.0),
                     },
                     ..cell_style.clone()
                 })
@@ -971,8 +972,8 @@ impl GerberViewer {
         });
     }
 
-    fn render_about_modal(&mut self, ctx: &Context) {
-        let modal = Modal::new(Id::new("About")).show(ctx, |ui| {
+    fn render_about_modal(&mut self, ui: &Ui) {
+        let modal = Modal::new(Id::new("About")).show(ui.ctx(), |ui| {
             use egui::special_emojis::GITHUB;
 
             ui.set_width(250.0);

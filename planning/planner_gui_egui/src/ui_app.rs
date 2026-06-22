@@ -347,7 +347,7 @@ impl UiApp {
         fonts::initialize(&cc.egui_ctx);
 
         // Set solid scrollbars for the entire app
-        cc.egui_ctx.style_mut(|style| {
+        cc.egui_ctx.global_style_mut(|style| {
             style.spacing.scroll = egui::style::ScrollStyle::solid();
         });
 
@@ -604,8 +604,9 @@ impl eframe::App for UiApp {
     }
 
     #[profiling::function]
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let ctx = ui.ctx().clone();
+        egui::Panel::top("top_panel").show_inside(ui, |ui| {
             profiling::scope!("ui::top_panel");
             // The top panel is often a good place for a menu bar:
 
@@ -761,11 +762,11 @@ impl eframe::App for UiApp {
 
             CentralPanel::default()
                 .frame(
-                    Frame::central_panel(&ctx.style())
+                    Frame::central_panel(&ctx.global_style())
                         .inner_margin(0.)
                         .fill(Color32::TRANSPARENT),
                 )
-                .show(ctx, |ui| {
+                .show_inside(ui, |ui| {
                     app_tabs.ui(ui, &mut tab_context);
                 });
         }

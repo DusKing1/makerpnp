@@ -70,7 +70,7 @@ impl UiComponent for PcbTabs {
 
         DockArea::new(&mut tree)
             .id(ui.id().with("pcb-tabs"))
-            .style(Style::from_egui(ctx.style().as_ref()))
+            .style(Style::from_egui(ctx.global_style().as_ref()))
             .show_inside(ui, &mut tab_viewer);
     }
 

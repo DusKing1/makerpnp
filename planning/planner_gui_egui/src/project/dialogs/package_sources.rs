@@ -2,7 +2,7 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 
 use derivative::Derivative;
-use egui::{Button, Modal, TextEdit, Ui, Widget};
+use egui::{Button, Frame, Modal, TextEdit, Ui, Widget};
 use egui_i18n::tr;
 use egui_mobius::types::Value;
 use egui_taffy::taffy::prelude::{auto, length, percent};
@@ -155,7 +155,7 @@ impl PackageSourcesModal {
                                             TextEdit::singleline(&mut chosen_path)
                                                 .desired_width(ui.available_width())
                                                 .interactive(false)
-                                                .frame(false)
+                                                .frame(Frame::NONE)
                                                 .ui(ui)
                                         },
                                         resize_x_transform,
@@ -222,7 +222,7 @@ impl PackageSourcesModal {
                                             TextEdit::singleline(&mut chosen_path)
                                                 .desired_width(ui.available_width())
                                                 .interactive(false)
-                                                .frame(false)
+                                                .frame(Frame::NONE)
                                                 .ui(ui)
                                         },
                                         resize_x_transform,
@@ -320,7 +320,7 @@ impl UiComponent for PackageSourcesModal {
             }
         }
 
-        ui.ctx().style_mut(|style| {
+        ui.ctx().global_style_mut(|style| {
             // if this is not done, text in labels/checkboxes/etc wraps
             style.wrap_mode = Some(egui::TextWrapMode::Extend);
         });

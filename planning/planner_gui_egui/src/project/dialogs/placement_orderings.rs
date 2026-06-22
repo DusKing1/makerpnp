@@ -228,7 +228,7 @@ impl UiComponent for PlacementOrderingsModal {
 
     #[profiling::function]
     fn ui<'context>(&self, ui: &mut Ui, _context: &mut Self::UiContext<'context>) {
-        ui.ctx().style_mut(|style| {
+        ui.ctx().global_style_mut(|style| {
             // if this is not done, text in labels/checkboxes/etc wraps
             style.wrap_mode = Some(egui::TextWrapMode::Extend);
         });
@@ -239,7 +239,7 @@ impl UiComponent for PlacementOrderingsModal {
 
         Modal::new(modal_id).show(ui.ctx(), |ui| {
             ui.set_min_width(400.0);
-            ui.set_max_width(ui.ctx().screen_rect().width() * 0.5);
+            ui.set_max_width(ui.ctx().content_rect().width() * 0.5);
 
             ui.heading(tr!("modal-phase-placement-orderings-title", { phase: self.phase_reference.to_string() }));
 

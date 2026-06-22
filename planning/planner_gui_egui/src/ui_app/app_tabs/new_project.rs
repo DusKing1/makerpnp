@@ -77,7 +77,7 @@ impl UiComponent for NewProjectTab {
                 .send(NewProjectTabUiCommand::DirectoryPicked(picked_directory.clone()));
         }
 
-        ui.ctx().style_mut(|style| {
+        ui.ctx().global_style_mut(|style| {
             // if this is not done, text in labels/checkboxes/etc wraps
             style.wrap_mode = Some(egui::TextWrapMode::Extend);
         });
@@ -159,7 +159,7 @@ impl NewProjectTab {
                                     .expect("sent")
                             }
 
-                            output.response
+                            output.response.response
                         }
                     });
 

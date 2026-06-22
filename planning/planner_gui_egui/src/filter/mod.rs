@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
 use derivative::Derivative;
-use egui::{Margin, Style, Ui};
+use egui::{Frame, Margin, Style, Ui};
 use egui_i18n::tr;
 use regex::{Regex, RegexBuilder};
 
@@ -211,7 +211,7 @@ impl UiComponent for Filter {
                     ui.add(
                         egui::TextEdit::singleline(&mut expression)
                             .hint_text(tr!("filter-expression"))
-                            .frame(false),
+                            .frame(Frame::NONE),
                     );
 
                     if ui

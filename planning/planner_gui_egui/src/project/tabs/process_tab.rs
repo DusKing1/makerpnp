@@ -115,7 +115,7 @@ impl ProcessTabUi {
                                     .expect("sent")
                             }
 
-                            output.response
+                            output.response.response
                         }
                     });
 
@@ -406,7 +406,7 @@ impl UiComponent for ProcessTabUi {
 
     #[profiling::function]
     fn ui<'context>(&self, ui: &mut Ui, _context: &mut Self::UiContext<'context>) {
-        ui.ctx().style_mut(|style| {
+        ui.ctx().global_style_mut(|style| {
             // if this is not done, text in labels/checkboxes/etc wraps
             style.wrap_mode = Some(egui::TextWrapMode::Extend);
         });

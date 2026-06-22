@@ -17,7 +17,7 @@ pub fn show_errors_modal(
 ) {
     let modal_id = ui.id().with("errors");
 
-    let width = ui.ctx().screen_rect().width() * 0.8;
+    let width = ui.ctx().content_rect().width() * 0.8;
 
     Modal::new(modal_id).show(ui.ctx(), |ui| {
         ui.set_width(width);

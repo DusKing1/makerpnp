@@ -299,7 +299,7 @@ macro_rules! tabs_impl {
 
             // FIXME there's a bug in `egui_dock` where the `on_close` handler is not called
             //       when programmatically closing all the tabs - reported via discord: https://discord.com/channels/900275882684477440/1075333382290026567/1340993744941617233
-            tree.retain_tabs(|_tab_key| false);
+            tree.retain_tabs(|_tab_key| false)
         }
 
         /// Due to bugs in egui_dock where it doesn't call `on_close` when closing tabs, it's possible that the tabs
@@ -315,7 +315,7 @@ macro_rules! tabs_impl {
 
             let mut tabs = self.tabs.lock().unwrap();
 
-            tabs.retain_all(&known_tab_keys, tab_context);
+            tabs.retain_all(&known_tab_keys, tab_context)
         }
 
         pub fn add_tab(&mut self, tab_kind: $tab_kind) -> TabKey {
@@ -393,7 +393,8 @@ macro_rules! tabs_impl {
 
             if let Some(tab_key) = tab {
                 let find_result = tree.find_tab(&tab_key).unwrap();
-                tree.set_active_tab(find_result);
+                tree.set_active_tab(find_result)
+                    .unwrap();
                 Ok(tab_key)
             } else {
                 Err(())
@@ -670,7 +671,7 @@ impl UiComponent for AppTabs {
 
         DockArea::new(&mut tree)
             .id(ui.id().with("app-tabs"))
-            .style(Style::from_egui(ctx.style().as_ref()))
+            .style(Style::from_egui(ctx.global_style().as_ref()))
             .show_inside(ui, &mut app_tab_viewer);
     }
 

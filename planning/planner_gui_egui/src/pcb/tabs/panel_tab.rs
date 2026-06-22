@@ -1112,9 +1112,9 @@ impl UiComponent for PanelTabUi {
             return;
         };
 
-        egui::SidePanel::left(ui.id().with("left_panel"))
+        egui::Panel::left(ui.id().with("left_panel"))
             .resizable(true)
-            .default_width(300.0)
+            .default_size(300.0)
             .show_inside(ui, |ui| {
                 // specifically NON-mutable state here
                 let state = &self.panel_tab_ui_state;
